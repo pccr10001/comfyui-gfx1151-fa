@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   comfyui:
-    image: docker.io/pccr10001/comfyui:gfx1151-fa
+    image: ghcr.io/pccr10001/comfyui-gfx1151-fa:latest
     container_name: comfyui_rocm
     stdin_open: true
     tty: true
