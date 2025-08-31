@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  comfyui:
+    image: docker.io/pccr10001/comfyui:gfx1151-fa
+    container_name: comfyui_rocm
+    stdin_open: true
+    tty: true
+    user: "1000:1000" # ComfyUI dir permission, please set to current user with `id`
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+    
+    devices:
+      - /dev/kfd
+      - /dev/dri
+    
+    group_add: # check with `id` command
+      - "44"   # video
+      - "993"  # render
+    
+    ipc: host
+    shm_size: 8G
+    
+    environment:
+      - PYTORCH_TUNABLEOP_ENABLED=1
+      - MIOPEN_FIND_MODE=FAST
+      - ROCBLAS_USE_HIPBLASLT=1 
+    ports:
+      - "8188:8188"
+    
+    volumes:
+      - ./ComfyUI:/opt/ComfyUI
+    
+    restart: unless-stopped
+    command: ["--listen", "0.0.0.0", "--use-flash-attention", "--gpu-only"]
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8188"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+

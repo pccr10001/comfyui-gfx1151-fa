@@ -1,4 +1,7 @@
-### Step
+ComfyUI for AMD Ryzen AI MAX+ 395 with Flash Attention
+---
+
+### Manual Installation
 * Install docker
 * Launch container with official ROCm image
 ```
@@ -34,3 +37,15 @@ ldconfig
 PYTORCH_TUNABLEOP_ENABLED=1 MIOPEN_FIND_MODE=FAST ROCBLAS_USE_HIPBLASLT=1 python3 main.py --listen 0.0.0.0 --use-flash-attention
 ```
 * Happy generating
+
+### Docker
+* Execute `id` to get the current user UID and GID, then check `video` and `render` GID.
+```
+user@gpu395:~/rocm-pytorch-gfx1151-fa$ id
+uid=1000(user) gid=1000(user) groups=1000(user),4(adm),24(cdrom),27(sudo),30(dip),44(video),46(plugdev),101(lxd),988(docker),993(render)
+```
+* Edit `docker-compose.yml`
+  * Replace `user` with current UID and GID.
+  * Replace `group_add` with `video` and `render` GID.
+  * Replace `./ComfyUI` with your root of ComfyUI, you can create an empty directory for this.
+* Launch with `docker compose up -d`
