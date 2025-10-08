@@ -11,9 +11,6 @@ docker run -it --cap-add=SYS_PTRACE --security-opt seccomp=unconfined \
 --ipc=host --shm-size 8G ghcr.io/rocm/no_rocm_image_ubuntu24_04:main
 ```
 * Grab wheels from [release](https://github.com/pccr10001/rocm-pytorch-gfx1151/releases)
-```
-pip uninstall torch torchvision torchaudio --break-system-packages -y
-```
 * Install wheels
 ```
 pip install ./torch-2.8.0a0+gitba56102-cp312-cp312-linux_x86_64.whl ./torchaudio-2.8.0a0+6e1c7fe-cp312-cp312-linux_x86_64.whl ./torchvision-0.23.0a0+824e8c8-cp312-cp312-linux_x86_64.whl  ./flash_attn-2.0.4-cp312-cp312-linux_x86_64.whl  --break-system-packages
