@@ -8,10 +8,9 @@ ComfyUI for AMD Ryzen AI MAX+ 395 with Flash Attention
 docker run -it --cap-add=SYS_PTRACE --security-opt seccomp=unconfined \
 --device=/dev/kfd --device=/dev/dri --group-add video \
 -v `pwd`/ComfyUI:/opt/ComfyUI -p 8188:8188 \
---ipc=host --shm-size 8G ghcr.io/rocm/therock_pytorch_dev_ubuntu_24_04_gfx1151:main
+--ipc=host --shm-size 8G ghcr.io/rocm/no_rocm_image_ubuntu24_04:main
 ```
-* Grab wheels from [release](https://github.com/pccr10001/rocm-pytorch-gfx1151/releases/tag/v2.8.0a0)
-* Uninstall preloaded torch
+* Grab wheels from [release](https://github.com/pccr10001/rocm-pytorch-gfx1151/releases)
 ```
 pip uninstall torch torchvision torchaudio --break-system-packages -y
 ```
