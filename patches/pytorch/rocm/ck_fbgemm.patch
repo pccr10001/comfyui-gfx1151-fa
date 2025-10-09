@@ -1,0 +1,103 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index ba57ead0..b6884320 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -166,11 +166,11 @@ message("checking which targets are supported")
+ if(NOT ENABLE_ASAN_PACKAGING)
+     if(NOT WIN32 AND ${hip_VERSION_FLAT} LESS 600300000)
+         # WORKAROUND: compiler does not yet fully support gfx12 targets, need to fix version above
+-        set(CK_GPU_TARGETS "gfx908;gfx90a;gfx942;gfx1030;gfx1100;gfx1101;gfx1102")
++        set(CK_GPU_TARGETS "gfx908;gfx90a;gfx942;gfx1030;gfx1100;gfx1101;gfx1102;gfx1151")
+     elseif(NOT WIN32 AND ${hip_VERSION_FLAT} GREATER_EQUAL 600300000 AND ${hip_VERSION_FLAT} LESS 600400000)
+-        set(CK_GPU_TARGETS "gfx908;gfx90a;gfx942;gfx1030;gfx1100;gfx1101;gfx1102;gfx1200;gfx1201")
++        set(CK_GPU_TARGETS "gfx908;gfx90a;gfx942;gfx1030;gfx1100;gfx1101;gfx1102;gfx1200;gfx1201;gfx1151")
+     elseif(NOT WIN32 AND ${hip_VERSION_FLAT} GREATER_EQUAL 600400000)
+-        set(CK_GPU_TARGETS "gfx908;gfx90a;gfx942;gfx1030;gfx1100;gfx1101;gfx1102;gfx1200;gfx1201;gfx950")
++        set(CK_GPU_TARGETS "gfx908;gfx90a;gfx942;gfx1030;gfx1100;gfx1101;gfx1102;gfx1200;gfx1201;gfx950;gfx1151")
+     endif()
+ else()
+     #build CK only for xnack-supported targets when using ASAN
+diff --git a/include/ck/ck.hpp b/include/ck/ck.hpp
+index 999eb022..70efa7b5 100644
+--- a/include/ck/ck.hpp
++++ b/include/ck/ck.hpp
+@@ -68,7 +68,7 @@ CK_DECLARE_ENV_VAR_BOOL(CK_LOGGING)
+ #define __gfx103__
+ #endif
+ #if defined(__gfx1100__) || defined(__gfx1101__) || defined(__gfx1102__) || \
+-    defined(__gfx1103__) || defined(__gfx11_generic__)
++    defined(__gfx1103__) || defined(__gfx1151__) || defined(__gfx11_generic__)
+ #define __gfx11__
+ #endif
+ #if defined(__gfx1200__) || defined(__gfx1201__) || defined(__gfx12_generic__)
+diff --git a/include/ck/host_utility/device_prop.hpp b/include/ck/host_utility/device_prop.hpp
+index f5c4b43a..7cb41969 100644
+--- a/include/ck/host_utility/device_prop.hpp
++++ b/include/ck/host_utility/device_prop.hpp
+@@ -87,7 +87,7 @@ inline bool is_gfx103_supported()
+ inline bool is_gfx11_supported()
+ {
+     return ck::get_device_name() == "gfx1100" || ck::get_device_name() == "gfx1101" ||
+-           ck::get_device_name() == "gfx1102" || ck::get_device_name() == "gfx1103";
++           ck::get_device_name() == "gfx1102" || ck::get_device_name() == "gfx1103" || ck::get_device_name() == "gfx1151";
+ }
+ 
+ inline bool is_gfx12_supported()
+diff --git a/include/ck/utility/amd_wmma.hpp b/include/ck/utility/amd_wmma.hpp
+index aa519fb2..092c87b2 100644
+--- a/include/ck/utility/amd_wmma.hpp
++++ b/include/ck/utility/amd_wmma.hpp
+@@ -10,7 +10,7 @@
+ namespace ck {
+ 
+ #if defined(__gfx1100__) || defined(__gfx1101__) || defined(__gfx1102__) || \
+-    defined(__gfx1103__) || defined(__gfx11_generic__)
++    defined(__gfx1103__) || defined(__gfx1151__) || defined(__gfx11_generic__)
+ #define __gfx11__
+ #endif
+ 
+diff --git a/include/ck_tile/core/config.hpp b/include/ck_tile/core/config.hpp
+index a15d2c04..4f12f670 100644
+--- a/include/ck_tile/core/config.hpp
++++ b/include/ck_tile/core/config.hpp
+@@ -16,7 +16,7 @@
+ #define __gfx103__
+ #endif
+ #if defined(__gfx1100__) || defined(__gfx1101__) || defined(__gfx1102__) || \
+-    defined(__gfx1103__) || defined(__gfx11_generic__)
++    defined(__gfx1103__) || defined(__gfx1151__) || defined(__gfx11_generic__)
+ #define __gfx11__
+ #endif
+ #if defined(__gfx1200__) || defined(__gfx1201__) || defined(__gfx12_generic__)
+diff --git a/library/src/tensor_operation_instance/gpu/CMakeLists.txt b/library/src/tensor_operation_instance/gpu/CMakeLists.txt
+index dd023e6b..9b9413bb 100644
+--- a/library/src/tensor_operation_instance/gpu/CMakeLists.txt
++++ b/library/src/tensor_operation_instance/gpu/CMakeLists.txt
+@@ -100,22 +100,22 @@ function(add_instance_library INSTANCE_NAME)
+         foreach(source IN LISTS ARGN)
+             set(INST_TARGETS ${SUPPORTED_GPU_TARGETS})
+             if(source MATCHES "_xdl")
+-                list(REMOVE_ITEM INST_TARGETS gfx900 gfx906 gfx906:xnack- gfx1030 gfx1100 gfx1101 gfx1102 gfx1103 gfx1200 gfx1201 gfx10.3-generic gfx11-generic gfx12-generic)
++                list(REMOVE_ITEM INST_TARGETS gfx900 gfx906 gfx906:xnack- gfx1030 gfx1100 gfx1101 gfx1151 gfx1102 gfx1103 gfx1200 gfx1201 gfx10.3-generic gfx11-generic gfx12-generic)
+             elseif(source MATCHES "_wmma")
+                 list(REMOVE_ITEM INST_TARGETS gfx900 gfx906 gfx906:xnack- gfx908:xnack+ gfx908:xnack- gfx90a:xnack+ gfx90a:xnack- gfx908 gfx90a gfx940 gfx941 gfx942 gfx1030)
+             elseif(source MATCHES "mha")
+-                list(REMOVE_ITEM INST_TARGETS gfx900 gfx906 gfx906:xnack- gfx908:xnack- gfx908:xnack+ gfx908 gfx1030 gfx1100 gfx1101 gfx1102 gfx1103 gfx1200 gfx1201 gfx10.3-generic gfx11-generic gfx12-generic)
++                list(REMOVE_ITEM INST_TARGETS gfx900 gfx906 gfx906:xnack- gfx908:xnack- gfx908:xnack+ gfx908 gfx1030 gfx1100 gfx1101 gfx1151 gfx1102 gfx1103 gfx1200 gfx1201 gfx10.3-generic gfx11-generic gfx12-generic)
+             endif()
+             #only build the fp8 gemm instances for gfx908/90a if the build argument is set
+             if(NOT CK_USE_FP8_ON_UNSUPPORTED_ARCH)
+                 if(source MATCHES "gemm_xdl_universal" AND source MATCHES "f8")
+-                    list(REMOVE_ITEM INST_TARGETS gfx900 gfx906 gfx906:xnack- gfx908:xnack- gfx908:xnack+ gfx90a:xnack+ gfx90a:xnack- gfx908 gfx90a gfx1030 gfx1100 gfx1101 gfx1102 gfx1103 gfx1200 gfx1201 gfx10.3-generic gfx11-generic gfx12-generic)
++                    list(REMOVE_ITEM INST_TARGETS gfx900 gfx906 gfx906:xnack- gfx908:xnack- gfx908:xnack+ gfx90a:xnack+ gfx90a:xnack- gfx908 gfx90a gfx1030 gfx1100 gfx1101 gfx1151 gfx1102 gfx1103 gfx1200 gfx1201 gfx10.3-generic gfx11-generic gfx12-generic)
+                 endif()
+                 if(source MATCHES "gemm_multiply_multiply_f8")
+-                    list(REMOVE_ITEM INST_TARGETS gfx900 gfx906 gfx906:xnack- gfx908:xnack- gfx908:xnack+ gfx90a:xnack+ gfx90a:xnack- gfx908 gfx90a gfx1030 gfx1100 gfx1101 gfx1102 gfx1103 gfx1200 gfx1201 gfx10.3-generic gfx11-generic gfx12-generic)
++                    list(REMOVE_ITEM INST_TARGETS gfx900 gfx906 gfx906:xnack- gfx908:xnack- gfx908:xnack+ gfx90a:xnack+ gfx90a:xnack- gfx908 gfx90a gfx1030 gfx1100 gfx1101 gfx1151 gfx1102 gfx1103 gfx1200 gfx1201 gfx10.3-generic gfx11-generic gfx12-generic)
+                 endif()
+                 if(source MATCHES "bached_gemm_multiply_multiply_f8")
+-                    list(REMOVE_ITEM INST_TARGETS gfx900 gfx906 gfx906:xnack- gfx908:xnack- gfx908:xnack+ gfx90a:xnack+ gfx90a:xnack- gfx908 gfx90a gfx1030 gfx1100 gfx1101 gfx1102 gfx1103 gfx1200 gfx1201 gfx10.3-generic gfx11-generic gfx12-generic)
++                    list(REMOVE_ITEM INST_TARGETS gfx900 gfx906 gfx906:xnack- gfx908:xnack- gfx908:xnack+ gfx90a:xnack+ gfx90a:xnack- gfx908 gfx90a gfx1030 gfx1100 gfx1101 gfx1151 gfx1102 gfx1103 gfx1200 gfx1201 gfx10.3-generic gfx11-generic gfx12-generic)
+                 endif()
+             endif()
+             set(offload_targets)

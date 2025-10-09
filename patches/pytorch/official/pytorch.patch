@@ -1,0 +1,193 @@
+diff --git a/c10/macros/Macros.h b/c10/macros/Macros.h
+--- a/c10/macros/Macros.h    2025-09-03 01:15:29.424445637 +0000
++++ b/c10/macros/Macros.h 2025-09-02 15:28:09.260302366 +0000
+@@ -311,11 +311,11 @@
+ #define C10_HIP_HOST_DEVICE
+ #endif
+
+-#if defined(USE_ROCM)
+-#define C10_WARP_SIZE warpSize // = 64 or 32 (Defined in hip_runtime.h)
+-#else
++//#if defined(USE_ROCM)
++//#define C10_WARP_SIZE warpSize // = 64 or 32 (Defined in hip_runtime.h)
++//#else
+ #define C10_WARP_SIZE 32
+-#endif
++//#endif
+
+ #if defined(_MSC_VER) && _MSC_VER <= 1900
+ #define __func__ __FUNCTION__
+diff --git a/third_party/composable_kernel/include/ck/ck.hpp b/third_party/composable_kernel/include/ck/ck.hpp
+--- a/third_party/composable_kernel/include/ck/ck.hpp        2025-09-03 01:18:04.591517307 +0000
++++ b/third_party/composable_kernel/include/ck/ck.hpp     2025-09-02 10:37:31.517088085 +0000
+@@ -70,7 +70,7 @@
+ #define __gfx103__
+ #endif
+ #if defined(__gfx1100__) || defined(__gfx1101__) || defined(__gfx1102__) || \
+-    defined(__gfx1103__) || defined(__gfx11_generic__)
++    defined(__gfx1103__) || defined(__gfx11_generic__) || defined(__gfx1151__)
+ #define __gfx11__
+ #endif
+ #if defined(__gfx1200__) || defined(__gfx1201__) || defined(__gfx12_generic__)
+diff --git a/third_party/composable_kernel/include/ck/host_utility/device_prop.hpp b/third_party/composable_kernel/include/ck/host_utility/device_prop.hpp
+--- a/third_party/composable_kernel/include/ck/host_utility/device_prop.hpp  2025-09-03 01:18:04.591517307 +0000
++++ b/third_party/composable_kernel/include/ck/host_utility/device_prop.hpp       2025-09-02 10:38:23.818062447 +0000
+@@ -88,7 +88,7 @@
+ inline bool is_gfx11_supported()
+ {
+     return ck::get_device_name() == "gfx1100" || ck::get_device_name() == "gfx1101" ||
+-           ck::get_device_name() == "gfx1102" || ck::get_device_name() == "gfx1103";
++           ck::get_device_name() == "gfx1102" || ck::get_device_name() == "gfx1103" || ck::get_device_name() == "gfx1151";
+ }
+
+ inline bool is_gfx12_supported()
+diff --git a/third_party/composable_kernel/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_base.hpp b/third_party/composable_kernel/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_base.hpp
+--- a/third_party/composable_kernel/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_base.hpp    2025-09-03 01:18:04.593517231 +0000
++++ b/third_party/composable_kernel/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_base.hpp 2025-09-02 15:47:40.633195396 +0000
+@@ -40,7 +40,7 @@
+
+     using ThisThreadBlock = ThisThreadBlock<BlockSize>;
+
+-    // Hardcode to 64, as HIP-provided "warpSize" would return 32 on RDNA GPUs.
++    // Hardcode to 64, as HIP-provided "32" would return 32 on RDNA GPUs.
+     static constexpr index_t WaveSize = 64;
+
+     static constexpr index_t A_K0 = ATileDesc{}.GetLength(I0);
+diff --git a/third_party/composable_kernel/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_v2.hpp b/third_party/composable_kernel/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_v2.hpp
+--- a/third_party/composable_kernel/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_v2.hpp      2025-09-03 01:18:04.593517231 +0000
++++ b/third_party/composable_kernel/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_v2.hpp   2025-09-02 15:47:33.117493656 +0000
+@@ -141,7 +141,7 @@
+     using Base::BMmaKStride;
+
+     static constexpr index_t WgpPerCU =
+-        (4 * warpSize / BlockSize) >= 1 ? 4 * warpSize / BlockSize : 1;
++        (4 * 32 / BlockSize) >= 1 ? 4 * 32 / BlockSize : 1;
+     static constexpr index_t FullMemBandPrefetchStages = math::integer_divide_ceil(
+         32768 / WgpPerCU,
+         (MPerBlock * sizeof(ADataType) + NPerBlock * sizeof(BDataType)) * KPerBlock);
+@@ -631,7 +631,7 @@
+     static constexpr index_t KRepeat        = KPerThread / KPerInnerLoop;
+
+     static constexpr index_t WgpPerCU =
+-        (4 * warpSize / BlockSize) >= 1 ? 4 * warpSize / BlockSize : 1;
++        (4 * 32 / BlockSize) >= 1 ? 4 * 32 / BlockSize : 1;
+     static constexpr index_t FullMemBandPrefetchStages = math::integer_divide_ceil(
+         32768 / WgpPerCU,
+         (MPerBlock * sizeof(ADataType) + NPerBlock * sizeof(BDataType)) * KPerBlock);
+diff --git a/third_party/composable_kernel/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_v2_ab_scale.hpp b/third_party/composable_kernel/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_v2_ab_scale.hpp
+--- a/third_party/composable_kernel/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_v2_ab_scale.hpp     2025-09-03 01:18:04.593517231 +0000
++++ b/third_party/composable_kernel/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_v2_ab_scale.hpp  2025-09-02 15:47:33.120493537 +0000
+@@ -141,7 +141,7 @@
+     using Base::BMmaKStride;
+
+     static constexpr index_t WgpPerCU =
+-        (4 * warpSize / BlockSize) >= 1 ? 4 * warpSize / BlockSize : 1;
++        (4 * 32 / BlockSize) >= 1 ? 4 * 32 / BlockSize : 1;
+     static constexpr index_t FullMemBandPrefetchStages = math::integer_divide_ceil(
+         32768 / WgpPerCU,
+         (MPerBlock * sizeof(ADataType) + NPerBlock * sizeof(BDataType)) * KPerBlock);
+diff --git a/third_party/composable_kernel/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_v2_b_scale.hpp b/third_party/composable_kernel/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_v2_b_scale.hpp
+--- a/third_party/composable_kernel/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_v2_b_scale.hpp      2025-09-03 01:18:04.593517231 +0000
++++ b/third_party/composable_kernel/include/ck/tensor_operation/gpu/block/blockwise_gemm_pipeline_xdlops_v2_b_scale.hpp   2025-09-02 15:47:33.119493577 +0000
+@@ -141,7 +141,7 @@
+     using Base::BMmaKStride;
+
+     static constexpr index_t WgpPerCU =
+-        (4 * warpSize / BlockSize) >= 1 ? 4 * warpSize / BlockSize : 1;
++        (4 * 32 / BlockSize) >= 1 ? 4 * 32 / BlockSize : 1;
+     static constexpr index_t FullMemBandPrefetchStages = math::integer_divide_ceil(
+         32768 / WgpPerCU,
+         (MPerBlock * sizeof(ADataType) + NPerBlock * sizeof(BDataType)) * KPerBlock);
+@@ -632,7 +632,7 @@
+     static constexpr index_t KRepeat        = KPerThread / KPerInnerLoop;
+
+     static constexpr index_t WgpPerCU =
+-        (4 * warpSize / BlockSize) >= 1 ? 4 * warpSize / BlockSize : 1;
++        (4 * 32 / BlockSize) >= 1 ? 4 * 32 / BlockSize : 1;
+     static constexpr index_t FullMemBandPrefetchStages = math::integer_divide_ceil(
+         32768 / WgpPerCU,
+         (MPerBlock * sizeof(ADataType) + NPerBlock * sizeof(BDataType)) * KPerBlock);
+diff --git a/third_party/composable_kernel/include/ck/tensor_operation/gpu/grid/batchnorm_multiblock/gridwise_multiblock_batchnorm_forward.hpp b/third_party/composable_kernel/include/ck/tensor_operation/gpu/grid/batchnorm_multiblock/gridwise_multiblock_batchnorm_forward.hpp
+--- a/third_party/composable_kernel/include/ck/tensor_operation/gpu/grid/batchnorm_multiblock/gridwise_multiblock_batchnorm_forward.hpp      2025-09-03 01:18:04.605516772 +0000
++++ b/third_party/composable_kernel/include/ck/tensor_operation/gpu/grid/batchnorm_multiblock/gridwise_multiblock_batchnorm_forward.hpp   2025-09-02 15:47:33.117493656 +0000
+@@ -202,7 +202,7 @@
+         const index_t block_local_id  = block_global_id % blkgroup_size;
+
+         if(block_local_id == 0)
+-            gms_init(BlockSize / warpSize * blkgroup_size, &p_control[blkgroup_id * 2]);
++            gms_init(BlockSize / 32 * blkgroup_size, &p_control[blkgroup_id * 2]);
+
+         const auto thread_cluster_idx =
+             thread_cluster_desc.CalculateBottomIndex(make_multi_index(thread_local_id));
+diff --git a/third_party/composable_kernel/include/ck/utility/amd_wmma.hpp b/third_party/composable_kernel/include/ck/utility/amd_wmma.hpp
+--- a/third_party/composable_kernel/include/ck/utility/amd_wmma.hpp  2025-09-03 01:18:04.613516466 +0000
++++ b/third_party/composable_kernel/include/ck/utility/amd_wmma.hpp       2025-09-02 10:38:42.556336758 +0000
+@@ -10,7 +10,7 @@
+ namespace ck {
+
+ #if defined(__gfx1100__) || defined(__gfx1101__) || defined(__gfx1102__) || \
+-    defined(__gfx1103__) || defined(__gfx11_generic__)
++    defined(__gfx1103__) || defined(__gfx11_generic__) || defined(__gfx1151__)
+ #define __gfx11__
+ #endif
+
+diff --git a/third_party/composable_kernel/include/ck/utility/get_id.hpp b/third_party/composable_kernel/include/ck/utility/get_id.hpp
+--- a/third_party/composable_kernel/include/ck/utility/get_id.hpp    2025-09-03 01:18:04.613516466 +0000
++++ b/third_party/composable_kernel/include/ck/utility/get_id.hpp 2025-09-02 15:34:22.340287156 +0000
+@@ -10,7 +10,7 @@
+ __host__ __device__ constexpr index_t get_warp_size()
+ {
+     // warpSize is defined by HIP
+-    return warpSize;
++    return 32;
+ }
+
+ __device__ index_t get_thread_local_1d_id() { return threadIdx.x; }
+diff --git a/third_party/composable_kernel/include/ck_tile/core/arch/arch.hpp b/third_party/composable_kernel/include/ck_tile/core/arch/arch.hpp
+--- a/third_party/composable_kernel/include/ck_tile/core/arch/arch.hpp       2025-09-03 01:18:04.615516390 +0000
++++ b/third_party/composable_kernel/include/ck_tile/core/arch/arch.hpp    2025-09-02 15:34:03.737087198 +0000
+@@ -51,7 +51,7 @@
+ CK_TILE_HOST_DEVICE constexpr index_t get_warp_size()
+ {
+     // warpSize is defined by HIP
+-    return warpSize;
++    return 32;
+ }
+
+ CK_TILE_DEVICE index_t get_grid_size() { return gridDim.x; }
+diff --git a/third_party/composable_kernel/include/ck_tile/core/config.hpp b/third_party/composable_kernel/include/ck_tile/core/config.hpp
+--- a/third_party/composable_kernel/include/ck_tile/core/config.hpp  2025-09-03 01:18:04.615516390 +0000
++++ b/third_party/composable_kernel/include/ck_tile/core/config.hpp       2025-09-02 10:38:06.095748817 +0000
+@@ -16,7 +16,7 @@
+ #define __gfx103__
+ #endif
+ #if defined(__gfx1100__) || defined(__gfx1101__) || defined(__gfx1102__) || \
+-    defined(__gfx1103__) || defined(__gfx11_generic__)
++    defined(__gfx1103__) || defined(__gfx11_generic__) || defined(__gfx1151__)
+ #define __gfx11__
+ #endif
+ #if defined(__gfx1200__) || defined(__gfx1201__) || defined(__gfx12_generic__)
+diff --git a/cmake/Dependencies.cmake b/cmake/Dependencies.cmake
+index a93386c27f8..faee7577a6d 100644
+--- a/cmake/Dependencies.cmake
++++ b/cmake/Dependencies.cmake
+@@ -1019,7 +1019,6 @@ if(USE_ROCM)
+     list(APPEND HIP_CXX_FLAGS -DTORCH_HIP_VERSION=${TORCH_HIP_VERSION})
+     list(APPEND HIP_CXX_FLAGS -Wno-shift-count-negative)
+     list(APPEND HIP_CXX_FLAGS -Wno-shift-count-overflow)
+-    list(APPEND HIP_CXX_FLAGS -Wno-duplicate-decl-specifier)
+     list(APPEND HIP_CXX_FLAGS -DCAFFE2_USE_MIOPEN)
+     list(APPEND HIP_CXX_FLAGS -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_HIP)
+     list(APPEND HIP_CXX_FLAGS -std=c++17)
+diff --git a/cmake/Dependencies.cmake b/cmake/Dependencies.cmake
+index 14cbcb1..d979f3a 100644
+--- a/third_party/gloo/cmake/Dependencies.cmake
++++ b/third_party/gloo/cmake/Dependencies.cmake
+@@ -148,7 +148,6 @@ if(USE_ROCM)
+     list(APPEND HIP_CXX_FLAGS -DHIP_VERSION=${HIP_VERSION_MAJOR})
+     list(APPEND HIP_CXX_FLAGS -Wno-shift-count-negative)
+     list(APPEND HIP_CXX_FLAGS -Wno-shift-count-overflow)
+-    list(APPEND HIP_CXX_FLAGS -Wno-duplicate-decl-specifier)
+     list(APPEND HIP_CXX_FLAGS -DUSE_MIOPEN)
+
+     set(HIP_CLANG_FLAGS ${HIP_CXX_FLAGS})
