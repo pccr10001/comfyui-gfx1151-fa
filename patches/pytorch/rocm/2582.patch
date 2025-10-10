@@ -11,15 +11,6 @@ index fefcf731cd8..de8ea38422f 100644
  #endif
  #if ROCM_VERSION >= 60500
            "gfx950"
-@@ -362,7 +362,7 @@ at::BlasBackend Context::blasPreferredBackend() {
-       static const std::vector<std::string> archs = {
-           "gfx90a", "gfx942",
- #if ROCM_VERSION >= 60300
--          "gfx1100", "gfx1101", "gfx1200", "gfx1201",
-+          "gfx1100", "gfx1101", "gfx1200", "gfx1201", "gfx1151",
- #endif
- #if ROCM_VERSION >= 60500
-           "gfx950"
 diff --git a/aten/src/ATen/native/cuda/Blas.cpp b/aten/src/ATen/native/cuda/Blas.cpp
 index 1fc9e14189e..2fc9cdddaf6 100644
 --- a/aten/src/ATen/native/cuda/Blas.cpp
