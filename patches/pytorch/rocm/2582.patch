@@ -1,5 +1,5 @@
 diff --git a/aten/src/ATen/Context.cpp b/aten/src/ATen/Context.cpp
-index fefcf731cd8..de8ea38422f 100644
+index fefcf731cd8..747c450590c 100644
 --- a/aten/src/ATen/Context.cpp
 +++ b/aten/src/ATen/Context.cpp
 @@ -336,7 +336,7 @@ at::BlasBackend Context::blasPreferredBackend() {
@@ -11,6 +11,24 @@ index fefcf731cd8..de8ea38422f 100644
  #endif
  #if ROCM_VERSION >= 60500
            "gfx950"
+@@ -344,7 +344,7 @@ at::BlasBackend Context::blasPreferredBackend() {
+       };
+       for (auto index: c10::irange(detail::getCUDAHooks().deviceCount())) {
+         if (!detail::getCUDAHooks().isGPUArch(archs, index)) {
+-          return false;
++          return true;
+         }
+       }
+       return true;
+@@ -373,7 +373,7 @@ at::BlasBackend Context::blasPreferredBackend() {
+           TORCH_WARN_ONCE(
+             "Attempting to use hipBLASLt on an unsupported architecture! "
+             "Overriding blas backend to hipblas");
+-          return true;
++          return false;
+         }
+       }
+       return false;
 diff --git a/aten/src/ATen/native/cuda/Blas.cpp b/aten/src/ATen/native/cuda/Blas.cpp
 index 1fc9e14189e..2fc9cdddaf6 100644
 --- a/aten/src/ATen/native/cuda/Blas.cpp
