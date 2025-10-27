@@ -155,7 +155,7 @@ index 4620cc698..7c431c0a8 100644
    static bool IsSupportedArgument(const RawArg &arg) {
      if (ck::get_device_name() == "gfx1100" ||
 -        ck::get_device_name() == "gfx1101" ||
-+        ck::get_device_name() == "gfx1101" || ck::get_device_name() == "gfx1151" ||
++        ck::get_device_name() == "gfx1101" || ck::get_device_name() == "gfx1150" || ck::get_device_name() == "gfx1151" ||
          ck::get_device_name() == "gfx1102") {
        if constexpr (!(is_same_v<Acc0DataType, float> ||
                        is_same_v<Acc0DataType, int32_t>)) {
@@ -365,7 +365,7 @@ index 97b18f90e..55da6eb4c 100644
                                        bool output_permute) {
  #if (!defined(__HIP_DEVICE_COMPILE__) || defined(__gfx1100__) ||               \
 -     defined(__gfx1101__) || defined(__gfx1102__))
-+     defined(__gfx1101__) || defined(__gfx1151__) || defined(__gfx1102__))
++     defined(__gfx1101__) || defined(__gfx1150__) || defined(__gfx1151__) || defined(__gfx1102__))
  
    // clang-format off
  // ***************************************************
