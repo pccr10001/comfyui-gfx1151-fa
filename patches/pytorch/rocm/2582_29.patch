@@ -1,0 +1,44 @@
+diff --git a/aten/src/ATen/Context.cpp b/aten/src/ATen/Context.cpp
+index 7a8d02be530..2f03e95bb0f 100644
+--- a/aten/src/ATen/Context.cpp
++++ b/aten/src/ATen/Context.cpp
+@@ -472,7 +472,7 @@ at::BlasBackend Context::blasPreferredBackend() {
+       static const std::vector<std::string> archs = {
+           "gfx90a", "gfx942",
+ #if ROCM_VERSION >= 60400
+-          "gfx1200", "gfx1201",
++          "gfx1150", "gfx1151", "gfx1200", "gfx1201",
+ #endif
+ #if ROCM_VERSION >= 60500
+           "gfx950"
+@@ -480,7 +480,7 @@ at::BlasBackend Context::blasPreferredBackend() {
+       };
+       for (auto index: c10::irange(detail::getCUDAHooks().deviceCount())) {
+         if (!detail::getCUDAHooks().isGPUArch(archs, index)) {
+-          return false;
++          return true;
+         }
+       }
+       return true;
+@@ -513,7 +513,7 @@ at::BlasBackend Context::blasPreferredBackend() {
+           TORCH_WARN_ONCE(
+             "Attempting to use hipBLASLt on an unsupported architecture! "
+             "Overriding blas backend to hipblas");
+-          return true;
++          return false;
+         }
+       }
+       return false;
+diff --git a/aten/src/ATen/native/cuda/Blas.cpp b/aten/src/ATen/native/cuda/Blas.cpp
+index 23447c7e09b..cf1a5cc7448 100644
+--- a/aten/src/ATen/native/cuda/Blas.cpp
++++ b/aten/src/ATen/native/cuda/Blas.cpp
+@@ -283,7 +283,7 @@ static bool isSupportedHipLtROCmArch(int index) {
+     static const std::vector<std::string> archs = {
+         "gfx90a", "gfx942",
+ #if ROCM_VERSION >= 60300
+-        "gfx1100", "gfx1101", "gfx1200", "gfx1201", "gfx908",
++        "gfx1100", "gfx1101", "gfx1200", "gfx1201", "gfx908", "gfx1151",
+ #endif
+ #if ROCM_VERSION >= 60500
+         "gfx950"
