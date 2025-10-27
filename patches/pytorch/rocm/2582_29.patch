@@ -38,7 +38,7 @@ index 23447c7e09b..cf1a5cc7448 100644
          "gfx90a", "gfx942",
  #if ROCM_VERSION >= 60300
 -        "gfx1100", "gfx1101", "gfx1200", "gfx1201", "gfx908",
-+        "gfx1100", "gfx1101", "gfx1200", "gfx1201", "gfx908", "gfx1151",
++        "gfx1100", "gfx1101", "gfx1200", "gfx1201", "gfx908", "gfx1150", "gfx1151",
  #endif
  #if ROCM_VERSION >= 60500
          "gfx950"
