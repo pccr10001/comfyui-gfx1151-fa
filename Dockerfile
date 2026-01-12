@@ -1,36 +1,38 @@
-# ROCm 250715
-FROM ghcr.io/rocm/therock_pytorch_dev_ubuntu_24_04_gfx1151@sha256:c75281ccdcdcb7c41f40509f19580a4e2ef7a7cbf68efa5d039a34cc3e68a44f
+# ROCm 260109
+FROM ghcr.io/rocm/no_rocm_image_ubuntu24_04:main AS builder
 
-ENV WHL_BASE=https://github.com/pccr10001/rocm-pytorch-gfx1151-fa/releases/download/v2.8.0a0/
+USER root
+
+RUN apt update && apt install -y aria2
+RUN aria2c -x 16 -s 16 https://therock-nightly-tarball.s3.amazonaws.com/therock-dist-linux-gfx1151-7.11.0a20260109.tar.gz -o therock.tar.gz -d /tmp
+RUN mkdir /opt/rocm && tar xvf /tmp/therock.tar.gz -C /opt/rocm
+
+FROM ghcr.io/rocm/no_rocm_image_ubuntu24_04:main
+
+USER root
+
+COPY --from=builder /opt/rocm /opt/rocm
+
+ENV WHL_BASE=https://github.com/pccr10001/rocm-pytorch-gfx1151-fa/releases/download/v2.9.1-ROCm-7.0rc-260109/
 ENV FLASH_ATTN_WHL=flash_attn-2.0.4-cp312-cp312-linux_x86_64.whl
-ENV TORCH_WHL=torch-2.8.0a0+gitba56102-cp312-cp312-linux_x86_64.whl
-ENV TORCHAUDIO_WHL=torchaudio-2.8.0a0+6e1c7fe-cp312-cp312-linux_x86_64.whl
-ENV TORCHVISION_WHL=torchvision-0.23.0a0+824e8c8-cp312-cp312-linux_x86_64.whl
+ENV TORCH_WHL=torch-2.9.1+git7e1940d-cp312-cp312-linux_x86_64.whl 
+ENV TORCHAUDIO_WHL=torchaudio-2.9.1+a224ab2-cp312-cp312-linux_x86_64.whl 
+ENV TORCHVISION_WHL=torchvision-0.24.1+d801a34-cp312-cp312-linux_x86_64.whl 
 
 ADD https://astral.sh/uv/install.sh /uv-installer.sh
 
 RUN apt update && apt install -y --no-install-recommends curl ca-certificates wget git
-RUN sh /uv-installer.sh && rm /uv-installer.sh
+RUN bash -c "UV_INSTALL_DIR=/usr/local/bin sh /uv-installer.sh" && rm /uv-installer.sh
 ENV PATH="/root/.local/bin/:$PATH"
+ENV ROCM_PATH="/opt/rocm"
 
-RUN pip uninstall torch torchvision torchaudio --break-system-packages -y
-
-RUN cd /opt && git clone https://github.com/comfyanonymous/ComfyUI ComfyUI.new
-RUN cd /opt && uv venv --python=3.12
-
-RUN bash -c "cd /opt/ComfyUI.new && source /opt/.venv/bin/activate && uv pip install --index-url https://d2awnip2yjpvqn.cloudfront.net/v2/gfx1151/ rocm[libraries,devel]"
-RUN echo /opt/.venv/lib/python3.12/site-packages/_rocm_sdk_core/lib >> /etc/ld.so.conf && ldconfig
-RUN cd /tmp && \
+RUN mkdir /opt/whl && cd /opt/whl && \
     wget $WHL_BASE$FLASH_ATTN_WHL && \
     wget $WHL_BASE$TORCH_WHL && \
     wget $WHL_BASE$TORCHAUDIO_WHL && \
     wget $WHL_BASE$TORCHVISION_WHL
 
-RUN cd /tmp && bash -c "source /opt/.venv/bin/activate && \
-    uv pip install ./$FLASH_ATTN_WHL ./$TORCH_WHL ./$TORCHAUDIO_WHL ./$TORCHVISION_WHL"
-
-RUN cd /opt/ComfyUI.new && bash -c "source /opt/.venv/bin/activate && \
-    uv pip install -r requirements.txt"
+RUN echo -n "\n$ROCM_PATH/lib\n$ROCM_PATH/lib64\n$ROCM_PATH/llvm/lib\n$ROCM_PATH/lib/llvm/lib/clang/20/lib/linux\n$ROCM_PATH/lib/rocm_sysdeps/lib\n$ROCM_PATH/lib/host-math/lib" >> /etc/ld.so.conf && ldconfig
 
 ADD comfyui.sh /opt/comfyui.sh
 RUN chmod +x /opt/comfyui.sh
